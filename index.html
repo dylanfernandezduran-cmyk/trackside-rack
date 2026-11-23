@@ -4,14 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F9F9F9">
-<title>TRACKSIDE — Off the rack, never ordinary.</title>
-<meta name="description" content="Trackside: a rack of selected knits and hoodies. Demo store, no real checkout.">
+<title>ACE DEPT. — Not for everyone.</title>
+<meta name="description" content="ACE DEPT. — a rack of selected knits and hoodies. Demo store, no real checkout.">
+<link rel="icon" href="images/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="preload" as="image" href="images/logo-ace-dept.webp">
 <link rel="preload" as="image" href="images/01-burberry-check-hood-zip.webp">
 <style>
   :root{
     --bg:#F9F9F9; --ink:#0B0B0B; --muted:#7a7a7a; --line:#e6e6e6;
-    --w: clamp(130px, 14.6vw, 215px);          /* hoodie width on the rack */
-    --overlap: calc(var(--w) * -0.36);
+    --w: clamp(140px, 15vw, 220px);            /* garment width on the rack */
+    --peek: calc(var(--w) * 0.30);              /* visible strip at rest (~one sleeve) */
+    --overlap: calc(var(--peek) - var(--w));
     --ease: cubic-bezier(.65,0,.2,1);
     --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
@@ -23,9 +28,9 @@
 
   /* ---------- header ---------- */
   header{position:relative;display:flex;align-items:center;justify-content:center;
-    padding:calc(22px + env(safe-area-inset-top)) 24px 18px}
-  .brand{font-weight:800;font-size:13px;letter-spacing:.42em;text-transform:uppercase;padding-left:.42em;
-    background:none;border:0;cursor:pointer}
+    padding:calc(18px + env(safe-area-inset-top)) 24px 14px}
+  .brand{background:none;border:0;cursor:pointer;padding:0;line-height:0}
+  .brand img{height:46px;width:auto;display:block}
   .bag{position:absolute;right:20px;top:calc(16px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px;
     border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
   .bag b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--ink);color:#fff;font-size:11px;padding:0 6px}
@@ -39,7 +44,7 @@
   /* rack view */
   .rack-view{display:flex;flex-direction:column;justify-content:center;padding:4vh 0 8vh}
   .headline{font-size:clamp(40px,6.4vw,92px);line-height:.98;letter-spacing:-.045em;font-weight:600;
-    padding:0 clamp(20px,5vw,72px);max-width:12ch;margin-bottom:clamp(28px,6vh,64px)}
+    padding:0 clamp(20px,5vw,72px);max-width:9ch;margin-bottom:clamp(28px,6vh,64px)}
   .headline span{color:var(--muted)}
   .rack-scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;
     padding:28px clamp(20px,5vw,72px) 46px;scroll-snap-type:x proximity}
@@ -51,17 +56,18 @@
   .item{position:relative;flex:0 0 var(--w);width:var(--w);aspect-ratio:3/4;margin-left:var(--overlap);
     background:none;border:0;padding:0;cursor:pointer;scroll-snap-align:center;
     transition:transform .45s var(--ease)}
-  .item:first-child{margin-left:0}
+  .rail + .item{margin-left:0}
   .item img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 14px rgba(0,0,0,.16)) drop-shadow(0 2px 3px rgba(0,0,0,.10));
     transform-origin:50% 2%;transition:transform .45s var(--ease)}
   .item .tag{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);white-space:nowrap;font-size:11px;
     letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:0;transition:opacity .3s}
+  /* Tight pack at rest (one sleeve showing). Hover slides later pieces aside so the
+     hovered garment comes fully out of the rail, both sleeves visible. */
   @media (hover:hover){
-    .item:hover{z-index:5}
-    .item:hover img{transform:translateY(-10px) rotate(-1.2deg) scale(1.03)}
-    .item:hover .tag{opacity:1}
-    .item:hover ~ .item{transform:translateX(18px)}
-    .item:has(~ .item:hover){transform:translateX(-18px)}
+    .item:hover, .item:focus-visible{z-index:40}
+    .item:hover img, .item:focus-visible img{transform:translateY(-14px) rotate(-1.2deg) scale(1.04)}
+    .item:hover .tag, .item:focus-visible .tag{opacity:1}
+    .item:hover ~ .item, .item:focus-visible ~ .item{transform:translateX(calc(var(--w) - var(--peek) - 6px))}
   }
   .item:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:8px}
 
@@ -108,8 +114,9 @@
 
   /* ---------- mobile ---------- */
   @media (max-width:760px){
-    :root{--w:150px;--overlap:-50px}
-    header{padding-bottom:6px}
+    :root{--w:160px;--peek:50px;--overlap:calc(var(--peek) - var(--w))}
+    header{padding-bottom:8px}
+    .brand img{height:38px}
     .bag{right:14px;padding:6px 10px}
     .bag .txt{display:none}
     .stage{min-height:auto}
@@ -127,13 +134,13 @@
 </head>
 <body>
 <header>
-  <button class="brand" id="brand" aria-label="Trackside home">Trackside</button>
+  <button class="brand" id="brand" aria-label="ACE DEPT. home"><img src="images/logo-ace-dept.webp" alt="ACE DEPT." width="150" height="46"></button>
   <button class="bag" id="bag" aria-label="Bag"><span class="txt">Bag</span><b id="bagCount">0</b></button>
 </header>
 
 <main class="stage" id="stage">
   <section class="view rack-view" id="rackView" aria-label="The rack">
-    <h1 class="headline" id="headline">Off the rack, <span>never ordinary.</span></h1>
+    <h1 class="headline" id="headline">Not for <span>everyone.</span></h1>
     <div class="rack-scroll" id="rackScroll">
       <div class="rack" id="rack" role="list"><div class="rail" id="rail" aria-hidden="true"></div></div>
     </div>
@@ -160,16 +167,16 @@
   </section>
 </main>
 
-<footer id="storeFoot">Trackside · demo store, no real checkout</footer>
+<footer id="storeFoot">ACE DEPT. · demo store, no real checkout</footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
   // Change STORE.name / headline / tagline in one place to rename the shop.
   const STORE = {
-    name: "Trackside",
-    headline: ["Off the rack,", "never ordinary."],
-    tagline: "Off the rack, never ordinary.",
+    name: "ACE DEPT.",
+    headline: ["Not for", "everyone."],
+    tagline: "Not for everyone.",
   };
   const PRODUCTS = [
     { id:"burberry-check", name:"Burberry Check Hood Zip", price:1500,
@@ -206,15 +213,14 @@
       desc:"Black zip hoodie with a white pony and tonal drawcords.",
       colors:[{n:"Black",hex:"#111111",img:"11-polo-black-zip-hoodie"}] },
     { id:"stussy-stock", name:"Stüssy Stock Knit", price:1500,
-      desc:"Black crewneck with the oversized Stock logo in white. Still has the hang tag.",
+      desc:"Black crewneck with the oversized Stock logo knit in white across the chest and sleeves.",
       colors:[{n:"Black",hex:"#111111",img:"12-stussy-stock-knit"}] },
   ];
   const src = k => `images/${k}.webp`;
   const fmt = n => `$${n.toLocaleString("en-US")} MXN`;
   const $ = id => document.getElementById(id);
   const rack = $("rack"), hero = $("hero"), panel = $("panel"), headline = $("headline");
-  const storeTitle = () => `${STORE.name.toUpperCase()} — ${STORE.tagline}`;
-  $("brand").textContent = STORE.name;
+  const storeTitle = () => `${STORE.name} — ${STORE.tagline}`;
   $("brand").setAttribute("aria-label", `${STORE.name} home`);
   headline.innerHTML = `${STORE.headline[0]} <span>${STORE.headline[1]}</span>`;
   $("storeFoot").textContent = `${STORE.name} · demo store, no real checkout`;
@@ -232,6 +238,7 @@
     b.className = "item"; b.type = "button"; b.setAttribute("role","listitem");
     b.setAttribute("aria-label", `${p.name}, ${fmt(p.price)}`);
     b.innerHTML = `<img src="${src(p.colors[0].img)}" alt="${p.name}" width="450" height="600" draggable="false" ${i>3?'loading="lazy"':''}><span class="tag">${p.name}</span>`;
+    b.style.zIndex = String(i + 1);
     b.addEventListener("click", e => { e.stopPropagation(); open(i); });
     rack.appendChild(b);
   });
@@ -306,7 +313,7 @@
 
     heroAnim.onfinish = () => { busy = false; state = "detail"; };
     if (location.hash !== "#" + p.id) history.pushState({p:p.id}, "", "#" + p.id);
-    document.title = `${p.name} — ${STORE.name.toUpperCase()}`;
+    document.title = `${p.name} — ${STORE.name}`;
   }
 
   function close(fromPop){
