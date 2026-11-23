@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F9F9F9">
+<title>TRACKSIDE — Off the rack, never ordinary.</title>
+<meta name="description" content="Trackside: a demo storefront with a hoodie rack and shared-element transitions. Fictional products and prices.">
+<link rel="preload" as="image" href="images/star-black.webp">
+<style>
+  :root{
+    --bg:#F9F9F9; --ink:#0B0B0B; --muted:#7a7a7a; --line:#e6e6e6;
+    --w: clamp(130px, 14.6vw, 215px);          /* hoodie width on the rack */
+    --overlap: calc(var(--w) * -0.36);
+    --ease: cubic-bezier(.65,0,.2,1);
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+  button,select{font:inherit;color:inherit}
+  img{display:block;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
+
+  /* ---------- header ---------- */
+  header{position:relative;display:flex;align-items:center;justify-content:center;
+    padding:calc(22px + env(safe-area-inset-top)) 24px 18px}
+  .brand{font-weight:800;font-size:13px;letter-spacing:.42em;text-transform:uppercase;padding-left:.42em;
+    background:none;border:0;cursor:pointer}
+  .bag{position:absolute;right:20px;top:calc(16px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px;
+    border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .bag b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--ink);color:#fff;font-size:11px;padding:0 6px}
+  .bag.bump b{animation:bump .5s var(--ease)}
+  @keyframes bump{40%{transform:scale(1.35)}}
+
+  /* ---------- stage: both views share one grid cell so both stay measurable ---------- */
+  .stage{display:grid;grid-template-columns:minmax(0,1fr);min-height:calc(100dvh - 120px)}
+  .view{grid-area:1/1;min-width:0}
+
+  /* rack view */
+  .rack-view{display:flex;flex-direction:column;justify-content:center;padding:4vh 0 8vh}
+  .headline{font-size:clamp(40px,6.4vw,92px);line-height:.98;letter-spacing:-.045em;font-weight:600;
+    padding:0 clamp(20px,5vw,72px);max-width:12ch;margin-bottom:clamp(28px,6vh,64px)}
+  .headline span{color:var(--muted)}
+  .rack-scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:28px clamp(20px,5vw,72px) 46px;scroll-snap-type:x proximity}
+  .rack-scroll::-webkit-scrollbar{display:none}
+  .rack{position:relative;display:flex;width:max-content;margin:0 auto;padding-top:4px}
+  .rail{ /* the rail */
+    position:absolute;left:-28px;right:-28px;top:calc(var(--w)*.04 + 4px);height:3px;border-radius:3px;
+    background:linear-gradient(#cfcfcf,#a9a9a9);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .item{position:relative;flex:0 0 var(--w);width:var(--w);aspect-ratio:3/4;margin-left:var(--overlap);
+    background:none;border:0;padding:0;cursor:pointer;scroll-snap-align:center;
+    transition:transform .45s var(--ease)}
+  .item:first-child{margin-left:0}
+  .item img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 14px rgba(0,0,0,.16)) drop-shadow(0 2px 3px rgba(0,0,0,.10));
+    transform-origin:50% 2%;transition:transform .45s var(--ease)}
+  .item .tag{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);white-space:nowrap;font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:0;transition:opacity .3s}
+  @media (hover:hover){
+    .item:hover{z-index:5}
+    .item:hover img{transform:translateY(-10px) rotate(-1.2deg) scale(1.03)}
+    .item:hover .tag{opacity:1}
+    .item:hover ~ .item{transform:translateX(18px)}
+    .item:has(~ .item:hover){transform:translateX(-18px)}
+  }
+  .item:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:8px}
+
+  /* detail view */
+  .detail-view{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,400px);align-items:center;
+    gap:clamp(24px,4vw,72px);padding:2vh clamp(20px,6vw,96px) 6vh;visibility:hidden;pointer-events:none}
+  body.is-detail .detail-view{visibility:visible;pointer-events:auto}
+  body.is-detail .rack-view{pointer-events:none}
+  .hero-wrap{display:flex;justify-content:center;align-items:center}
+  .hero{height:min(74vh,700px);aspect-ratio:3/4;width:auto;max-width:100%;transform-origin:0 0;
+    filter:drop-shadow(0 26px 24px rgba(0,0,0,.18)) drop-shadow(0 3px 4px rgba(0,0,0,.08));will-change:transform}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 20px 50px -30px rgba(0,0,0,.25)}
+  .back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font-size:12px;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-bottom:18px}
+  .back:hover{color:var(--ink)}
+  .p-name{font-size:28px;letter-spacing:-.02em;font-weight:600}
+  .p-price{font-size:18px;margin-top:6px;color:#333}
+  .p-desc{font-size:14px;line-height:1.5;color:var(--muted);margin-top:14px}
+  .label{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:24px 0 10px;display:flex;justify-content:space-between}
+  .label span{font-weight:400;color:var(--muted);letter-spacing:.04em;text-transform:none}
+  .swatches{display:flex;gap:12px}
+  .sw{width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);cursor:pointer;display:grid;place-items:center;
+    box-shadow:0 0 0 0 var(--ink);transition:box-shadow .2s, transform .2s}
+  .sw:hover{transform:scale(1.08)}
+  .sw[aria-checked="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
+  .sw svg{width:16px;height:16px;opacity:0;transition:opacity .2s}
+  .sw[aria-checked="true"] svg{opacity:1}
+  .select{position:relative}
+  .select select{appearance:none;-webkit-appearance:none;width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;
+    padding:14px 40px 14px 14px;font-size:16px;cursor:pointer}
+  .select::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+  .add{margin-top:24px;width:100%;border:0;border-radius:12px;background:var(--ink);color:#fff;padding:17px;font-size:15px;font-weight:600;
+    letter-spacing:.02em;cursor:pointer;transition:transform .15s, background .2s}
+  .add:active{transform:scale(.98)}
+  .add:hover{background:#262626}
+  .fine{font-size:11px;color:var(--muted);margin-top:14px;text-align:center}
+
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:var(--ink);color:#fff;border-radius:999px;padding:12px 18px;font-size:14px;display:flex;gap:10px;align-items:center;
+    transition:opacity .3s, transform .35s var(--ease);z-index:50;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  footer{text-align:center;font-size:11px;color:#9a9a9a;padding:0 20px calc(18px + env(safe-area-inset-bottom));letter-spacing:.03em}
+
+  /* ---------- mobile ---------- */
+  @media (max-width:760px){
+    :root{--w:150px;--overlap:-50px}
+    header{padding-bottom:6px}
+    .bag{right:14px;padding:6px 10px}
+    .bag .txt{display:none}
+    .stage{min-height:auto}
+    .rack-view{justify-content:flex-start;padding-top:5vh}
+    .headline{font-size:clamp(40px,12vw,56px)}
+    .rack-scroll{scroll-padding:0 20px}
+    .rack{margin:0}
+    .detail-view{grid-template-columns:1fr;align-items:start;gap:14px;padding:0 16px 30px}
+    .hero{height:min(48vh,440px)}
+    .panel{padding:22px;border-radius:20px}
+    .p-name{font-size:24px}
+  }
+  @media (prefers-reduced-motion:reduce){ .item,.item img{transition:none} }
+</style>
+</head>
+<body>
+<header>
+  <button class="brand" id="brand" aria-label="Trackside home">Trackside</button>
+  <button class="bag" id="bag" aria-label="Bag"><span class="txt">Bag</span><b id="bagCount">0</b></button>
+</header>
+
+<main class="stage" id="stage">
+  <section class="view rack-view" id="rackView" aria-label="The rack">
+    <h1 class="headline" id="headline">Off the rack, <span>never ordinary.</span></h1>
+    <div class="rack-scroll" id="rackScroll">
+      <div class="rack" id="rack" role="list"><div class="rail" id="rail" aria-hidden="true"></div></div>
+    </div>
+  </section>
+
+  <section class="view detail-view" id="detailView" aria-label="Product details" aria-hidden="true">
+    <div class="hero-wrap" id="heroWrap"><img class="hero" id="hero" alt="" width="450" height="600"></div>
+    <div class="panel" id="panel">
+      <button class="back" id="back" type="button">&larr; Back to rack</button>
+      <h2 class="p-name" id="pName"></h2>
+      <div class="p-price" id="pPrice"></div>
+      <p class="p-desc" id="pDesc"></p>
+      <div class="label">Color <span id="pColor"></span></div>
+      <div class="swatches" id="swatches" role="radiogroup" aria-label="Color"></div>
+      <div class="label">Size</div>
+      <div class="select">
+        <select id="size" aria-label="Size">
+          <option>X-Small</option><option>Small</option><option selected>Medium</option><option>Large</option><option>X-Large</option><option>XX-Large</option>
+        </select>
+      </div>
+      <button class="add" id="add" type="button">Add to Cart</button>
+      <p class="fine">Demo store · no real checkout</p>
+    </div>
+  </section>
+</main>
+
+<footer>Trackside is a fictional demo store. Products, names and prices are made up.</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const PRODUCTS = [
+    { id:"oxblood",  name:"Oxblood Hoodie",     price:98,  desc:"Heavyweight 400gsm brushed fleece in a deep wine red. Relaxed fit, dropped shoulder.",
+      colors:[{n:"Oxblood",hex:"#6E1E25",img:"maroon"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
+    { id:"graphite", name:"Graphite Hoodie",    price:95,  desc:"Our everyday hoodie in washed charcoal. Soft hand, ribbed cuffs, kangaroo pocket.",
+      colors:[{n:"Graphite",hex:"#3B3B3D",img:"charcoal"},{n:"Harbor Navy",hex:"#1F2A4D",img:"navy"}] },
+    { id:"star",     name:"Star Hoodie",        price:120, desc:"All-over star print on midweight loopback cotton. The one everybody asks about.",
+      colors:[{n:"Black",hex:"#111111",img:"star-black"},{n:"Navy",hex:"#1B2550",img:"star-navy"}] },
+    { id:"ecru",     name:"Ecru Fleece Hoodie", price:105, desc:"Undyed-look cream fleece with tonal drawcords. Garment washed for zero shrink.",
+      colors:[{n:"Ecru",hex:"#EEE8DA",img:"cream"},{n:"Dune",hex:"#D8CCB6",img:"beige"}] },
+    { id:"field",    name:"Field Hoodie",       price:98,  desc:"Olive green with a slightly boxy cut. Built to be lived in.",
+      colors:[{n:"Olive",hex:"#555E3B",img:"olive"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
+    { id:"harbor",   name:"Harbor Hoodie",      price:95,  desc:"Classic navy pullover, heavyweight and structured. Pairs with everything.",
+      colors:[{n:"Harbor Navy",hex:"#1F2A4D",img:"navy"},{n:"Heather",hex:"#B9B9B9",img:"lightgrey"}] },
+    { id:"dune",     name:"Dune Hoodie",        price:102, desc:"Warm sand beige in brushed-back fleece. Quiet colour, loud comfort.",
+      colors:[{n:"Dune",hex:"#D8CCB6",img:"beige"},{n:"Ecru",hex:"#EEE8DA",img:"cream"}] },
+    { id:"heather",  name:"Heather Hoodie",     price:90,  desc:"Light heather grey, the archetype. Mélange cotton with a soft vintage feel.",
+      colors:[{n:"Heather",hex:"#B9B9B9",img:"lightgrey"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
+  ];
+  const src = k => `images/${k}.webp`;
+  const $ = id => document.getElementById(id);
+  const rack = $("rack"), hero = $("hero"), panel = $("panel"), headline = $("headline");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const D = reduce ? 1 : 720;               // main duration (ms)
+  const EASE = "cubic-bezier(.65,0,.2,1)";
+
+  // preload every variant so swatch swaps are instant
+  new Set(PRODUCTS.flatMap(p => p.colors.map(c => c.img))).forEach(k => { const i = new Image(); i.src = src(k); });
+
+  // build the rack
+  PRODUCTS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "item"; b.type = "button"; b.setAttribute("role","listitem");
+    b.setAttribute("aria-label", `${p.name}, $${p.price.toFixed(2)}`);
+    b.innerHTML = `<img src="${src(p.colors[0].img)}" alt="${p.name}" width="450" height="600" draggable="false" ${i>3?'loading="lazy"':''}><span class="tag">${p.name}</span>`;
+    b.addEventListener("click", e => { e.stopPropagation(); open(i); });
+    rack.appendChild(b);
+  });
+  const items = [...rack.querySelectorAll(".item")];
+  const rail = $("rail");
+
+  let state = "rack", busy = false, current = -1, colorIdx = 0, running = [];
+  const fmt = n => `$${n.toFixed(2)}`;
+  const flip = (a, b) => `translate(${a.left-b.left}px, ${a.top-b.top}px) scale(${a.width/b.width}, ${a.height/b.height})`;
+  const track = a => (running.push(a), a);
+  const clearRunning = () => { running.forEach(a => a.cancel()); running = []; };
+
+  function fillPanel(p){
+    $("pName").textContent = p.name;
+    $("pPrice").textContent = fmt(p.price);
+    $("pDesc").textContent = p.desc;
+    $("size").value = "Medium";
+    renderSwatches(p);
+  }
+  function lum(hex){ const n=parseInt(hex.slice(1),16); return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))/255; }
+  function renderSwatches(p){
+    const box = $("swatches"); box.innerHTML = "";
+    p.colors.forEach((c, k) => {
+      const s = document.createElement("button");
+      s.type="button"; s.className="sw"; s.style.background=c.hex; s.setAttribute("role","radio");
+      s.setAttribute("aria-label", c.n); s.setAttribute("aria-checked", k===colorIdx);
+      const tick = lum(c.hex) > .6 ? "#111" : "#fff";
+      s.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${tick}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+      s.addEventListener("click", () => setColor(k));
+      box.appendChild(s);
+    });
+    $("pColor").textContent = p.colors[colorIdx].n;
+  }
+  function setColor(k){
+    if (k === colorIdx || current < 0) return;
+    const p = PRODUCTS[current]; colorIdx = k; p.sel = k;
+    [...$("swatches").children].forEach((s,j) => s.setAttribute("aria-checked", j===k));
+    $("pColor").textContent = p.colors[k].n;
+    const next = src(p.colors[k].img);
+    const swap = () => { hero.src = next; items[current].querySelector("img").src = next; };
+    if (reduce) return swap();
+    hero.animate([{opacity:1, transform:"none"},{opacity:0, transform:"scale(.97)"}], {duration:160, easing:"ease-in"}).onfinish = () => {
+      swap();
+      hero.animate([{opacity:0, transform:"scale(.97)"},{opacity:1, transform:"none"}], {duration:260, easing:"ease-out"});
+    };
+  }
+
+  function open(i){
+    if (state !== "rack" || busy) return;
+    busy = true; current = i; colorIdx = PRODUCTS[i].sel || 0;
+    const p = PRODUCTS[i], srcImg = items[i].querySelector("img");
+    // make sure the picked colour is the one on the rack
+    srcImg.src = src(p.colors[colorIdx].img);
+    const first = srcImg.getBoundingClientRect();
+    hero.src = srcImg.src; hero.alt = p.name;
+    fillPanel(p);
+    document.body.classList.add("is-detail");
+    $("detailView").setAttribute("aria-hidden","false");
+    const last = hero.getBoundingClientRect();
+    srcImg.style.visibility = "hidden";
+    clearRunning();
+
+    const heroAnim = track(hero.animate([{transform: flip(first,last)}, {transform:"none"}], {duration:D, easing:EASE}));
+    items.forEach((it, j) => {
+      if (j === i) return;
+      const dir = j < i ? -1 : 1, dist = Math.abs(j - i);
+      track(it.animate([{transform:"none", opacity:1},{transform:`translateX(${dir*(55 + dist*6)}vw)`, opacity:0}],
+        {duration:D, easing:EASE, delay: reduce?0:(dist-1)*28, fill:"forwards"}));
+    });
+    track(headline.animate([{opacity:1, transform:"none"},{opacity:0, transform:"translateY(-16px)"}], {duration:D*.5, easing:"ease-out", fill:"forwards"}));
+    track(rail.animate([{opacity:1},{opacity:0}], {duration:D*.45, easing:"ease-out", fill:"forwards"}));
+    track(panel.animate([{opacity:0, transform:"translateX(70px)"},{opacity:1, transform:"none"}], {duration:D*.85, easing:EASE, delay:D*.2, fill:"backwards"}));
+
+    heroAnim.onfinish = () => { busy = false; state = "detail"; };
+    if (location.hash !== "#" + p.id) history.pushState({p:p.id}, "", "#" + p.id);
+    document.title = `${p.name} — TRACKSIDE`;
+  }
+
+  function close(fromPop){
+    if (state !== "detail" || busy) return;
+    busy = true;
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+    const srcImg = items[current].querySelector("img");
+    const first = hero.getBoundingClientRect();
+    const last  = srcImg.getBoundingClientRect();
+    // detail panel out, headline + rack back in (reverse of open)
+    const panelAnim = panel.animate([{opacity:1, transform:"none"},{opacity:0, transform:"translateX(70px)"}], {duration:D*.55, easing:EASE, fill:"forwards"});
+    const heroAnim = hero.animate([{transform:"none"},{transform: flip(last, first)}], {duration:D, easing:EASE, fill:"forwards"});
+    items.forEach((it, j) => {
+      if (j === current) return;
+      const dir = j < current ? -1 : 1, dist = Math.abs(j - current);
+      clearAnimFor(it);
+      track(it.animate([{transform:`translateX(${dir*(55 + dist*6)}vw)`, opacity:0},{transform:"none", opacity:1}],
+        {duration:D, easing:EASE, delay: reduce?0:Math.max(0, 3-dist)*28}));
+    });
+    clearAnimFor(headline); clearAnimFor(rail);
+    track(rail.animate([{opacity:0},{opacity:1}], {duration:D*.5, delay:D*.45, easing:"ease-out", fill:"backwards"}));
+    track(headline.animate([{opacity:0, transform:"translateY(-16px)"},{opacity:1, transform:"none"}], {duration:D*.6, easing:"ease-out", delay:D*.35, fill:"backwards"}));
+
+    heroAnim.onfinish = () => {
+      srcImg.style.visibility = "";
+      document.body.classList.remove("is-detail");
+      $("detailView").setAttribute("aria-hidden","true");
+      heroAnim.cancel(); panelAnim.cancel();
+      busy = false; state = "rack"; current = -1;
+      document.title = "TRACKSIDE — Off the rack, never ordinary.";
+    };
+    if (!fromPop && location.hash) history.back();
+  }
+  function clearAnimFor(el){ running = running.filter(a => { if (a.effect && a.effect.target === el){ a.cancel(); return false; } return true; }); }
+
+  // close on empty background, Esc, back button, brand
+  $("detailView").addEventListener("click", e => { if (!panel.contains(e.target) && e.target !== hero) close(); });
+  $("stage").addEventListener("click", e => { if (state === "detail" && e.target === e.currentTarget) close(); });
+  document.addEventListener("click", e => { if (state === "detail" && (e.target === document.body || e.target.tagName === "HEADER" || e.target.tagName === "FOOTER")) close(); });
+  $("back").addEventListener("click", () => close());
+  $("brand").addEventListener("click", () => close());
+  addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+  addEventListener("popstate", () => {
+    if (state === "detail") close(true);
+    else { const k = PRODUCTS.findIndex(p => "#" + p.id === location.hash); if (k >= 0) open(k); }
+  });
+
+  // cart (visual only)
+  let count = 0, toastTimer;
+  $("add").addEventListener("click", () => {
+    const p = PRODUCTS[current]; if (!p) return;
+    count++; $("bagCount").textContent = count;
+    const bag = $("bag"); bag.classList.remove("bump"); void bag.offsetWidth; bag.classList.add("bump");
+    const t = $("toast");
+    t.textContent = `✓ Added ${p.name} · ${p.colors[colorIdx].n} · ${$("size").value}`;
+    t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  });
+  $("bag").addEventListener("click", () => {
+    const t = $("toast"); t.textContent = count ? `${count} item${count>1?"s":""} in your bag · demo, no checkout` : "Your bag is empty";
+    t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
+  });
+
+  // centre the rack on the Star Hoodie on narrow screens; deep-link support
+  addEventListener("load", () => {
+    const sc = $("rackScroll");
+    if (sc.scrollWidth > sc.clientWidth) sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2;
+    const k = PRODUCTS.findIndex(p => "#" + p.id === location.hash);
+    if (k >= 0) { history.replaceState(null, "", location.pathname); setTimeout(() => open(k), 250); }
+  });
+})();
+</script>
+</body>
+</html>
