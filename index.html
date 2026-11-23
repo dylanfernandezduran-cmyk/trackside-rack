@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F9F9F9">
 <title>TRACKSIDE — Off the rack, never ordinary.</title>
-<meta name="description" content="Trackside: a demo storefront with a hoodie rack and shared-element transitions. Fictional products and prices.">
-<link rel="preload" as="image" href="images/star-black.webp">
+<meta name="description" content="Trackside: a rack of selected knits and hoodies. Demo store, no real checkout.">
+<link rel="preload" as="image" href="images/01-burberry-check-hood-zip.webp">
 <style>
   :root{
     --bg:#F9F9F9; --ink:#0B0B0B; --muted:#7a7a7a; --line:#e6e6e6;
@@ -151,7 +151,7 @@
       <div class="label">Size</div>
       <div class="select">
         <select id="size" aria-label="Size">
-          <option>X-Small</option><option>Small</option><option selected>Medium</option><option>Large</option><option>X-Large</option><option>XX-Large</option>
+          <option>S</option><option selected>M</option><option>L</option><option>XL</option>
         </select>
       </div>
       <button class="add" id="add" type="button">Add to Cart</button>
@@ -160,32 +160,65 @@
   </section>
 </main>
 
-<footer>Trackside is a fictional demo store. Products, names and prices are made up.</footer>
+<footer id="storeFoot">Trackside · demo store, no real checkout</footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
+  // Change STORE.name / headline / tagline in one place to rename the shop.
+  const STORE = {
+    name: "Trackside",
+    headline: ["Off the rack,", "never ordinary."],
+    tagline: "Off the rack, never ordinary.",
+  };
   const PRODUCTS = [
-    { id:"oxblood",  name:"Oxblood Hoodie",     price:98,  desc:"Heavyweight 400gsm brushed fleece in a deep wine red. Relaxed fit, dropped shoulder.",
-      colors:[{n:"Oxblood",hex:"#6E1E25",img:"maroon"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
-    { id:"graphite", name:"Graphite Hoodie",    price:95,  desc:"Our everyday hoodie in washed charcoal. Soft hand, ribbed cuffs, kangaroo pocket.",
-      colors:[{n:"Graphite",hex:"#3B3B3D",img:"charcoal"},{n:"Harbor Navy",hex:"#1F2A4D",img:"navy"}] },
-    { id:"star",     name:"Star Hoodie",        price:120, desc:"All-over star print on midweight loopback cotton. The one everybody asks about.",
-      colors:[{n:"Black",hex:"#111111",img:"star-black"},{n:"Navy",hex:"#1B2550",img:"star-navy"}] },
-    { id:"ecru",     name:"Ecru Fleece Hoodie", price:105, desc:"Undyed-look cream fleece with tonal drawcords. Garment washed for zero shrink.",
-      colors:[{n:"Ecru",hex:"#EEE8DA",img:"cream"},{n:"Dune",hex:"#D8CCB6",img:"beige"}] },
-    { id:"field",    name:"Field Hoodie",       price:98,  desc:"Olive green with a slightly boxy cut. Built to be lived in.",
-      colors:[{n:"Olive",hex:"#555E3B",img:"olive"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
-    { id:"harbor",   name:"Harbor Hoodie",      price:95,  desc:"Classic navy pullover, heavyweight and structured. Pairs with everything.",
-      colors:[{n:"Harbor Navy",hex:"#1F2A4D",img:"navy"},{n:"Heather",hex:"#B9B9B9",img:"lightgrey"}] },
-    { id:"dune",     name:"Dune Hoodie",        price:102, desc:"Warm sand beige in brushed-back fleece. Quiet colour, loud comfort.",
-      colors:[{n:"Dune",hex:"#D8CCB6",img:"beige"},{n:"Ecru",hex:"#EEE8DA",img:"cream"}] },
-    { id:"heather",  name:"Heather Hoodie",     price:90,  desc:"Light heather grey, the archetype. Mélange cotton with a soft vintage feel.",
-      colors:[{n:"Heather",hex:"#B9B9B9",img:"lightgrey"},{n:"Graphite",hex:"#3B3B3D",img:"charcoal"}] },
+    { id:"burberry-check", name:"Burberry Check Hood Zip", price:1500,
+      desc:"Black zip hoodie with the signature check lining in the hood. Gold-tone zip and TB monogram.",
+      colors:[{n:"Black",hex:"#111111",img:"01-burberry-check-hood-zip"}] },
+    { id:"ysl-script", name:"Saint Laurent Script Knit", price:1500,
+      desc:"Black crewneck in a fuzzy knit, with the Saint Laurent script in cream across the chest.",
+      colors:[{n:"Black",hex:"#111111",img:"02-saint-laurent-script-knit"}] },
+    { id:"polo-cream-qzip", name:"Polo Cream Quarter-Zip", price:1500,
+      desc:"Cream knit quarter-zip with a plaid inner collar and the embroidered pony at the chest.",
+      colors:[{n:"Cream",hex:"#EFE8DC",img:"03-polo-cream-quarter-zip"}] },
+    { id:"polo-navy-fleece", name:"Polo Navy Quarter-Zip", price:1500,
+      desc:"Navy interlock quarter-zip with a white pony. Clean, everyday pullover.",
+      colors:[{n:"Navy",hex:"#1B2A4A",img:"04-polo-navy-quarter-zip-fleece"}] },
+    { id:"polo-bear-flag", name:"Polo Bear Flag Knit", price:1500,
+      desc:"Navy knit with the Polo Bear in jeans and a flag sweater, and RL at the hem.",
+      colors:[{n:"Navy",hex:"#1A1E2E",img:"05-polo-bear-flag-knit"}] },
+    { id:"polo-navy-cable", name:"Polo Navy Cable Crew", price:1500,
+      desc:"Navy cable-knit crewneck with a red embroidered pony.",
+      colors:[{n:"Navy",hex:"#1A2744",img:"06-polo-navy-cable-crew"}] },
+    { id:"polo-cream-cable", name:"Polo Cream Cable Crew", price:1500,
+      desc:"Cream cable-knit crewneck with a navy embroidered pony.",
+      colors:[{n:"Cream",hex:"#F4F1EC",img:"07-polo-cream-cable-crew"}] },
+    { id:"polo-grey-zip", name:"Polo Heather Zip Hoodie", price:1500,
+      desc:"Heather grey zip hoodie with a navy pony at the chest.",
+      colors:[{n:"Heather Grey",hex:"#C4C4C4",img:"08-polo-grey-zip-hoodie"}] },
+    { id:"polo-navy-qzip", name:"Polo Navy Knit Quarter-Zip", price:1500,
+      desc:"Navy rib-knit quarter-zip with a red embroidered pony.",
+      colors:[{n:"Navy",hex:"#152044",img:"09-polo-navy-quarter-zip-knit"}] },
+    { id:"polo-bear-tuxedo", name:"Polo Bear Tuxedo Knit", price:1500,
+      desc:"Black knit with the Polo Bear in a tuxedo, and RL at the cuff.",
+      colors:[{n:"Black",hex:"#111111",img:"10-polo-bear-tuxedo-knit"}] },
+    { id:"polo-black-zip", name:"Polo Black Zip Hoodie", price:1500,
+      desc:"Black zip hoodie with a white pony and tonal drawcords.",
+      colors:[{n:"Black",hex:"#111111",img:"11-polo-black-zip-hoodie"}] },
+    { id:"stussy-stock", name:"Stüssy Stock Knit", price:1500,
+      desc:"Black crewneck with the oversized Stock logo in white. Still has the hang tag.",
+      colors:[{n:"Black",hex:"#111111",img:"12-stussy-stock-knit"}] },
   ];
   const src = k => `images/${k}.webp`;
+  const fmt = n => `$${n.toLocaleString("en-US")} MXN`;
   const $ = id => document.getElementById(id);
   const rack = $("rack"), hero = $("hero"), panel = $("panel"), headline = $("headline");
+  const storeTitle = () => `${STORE.name.toUpperCase()} — ${STORE.tagline}`;
+  $("brand").textContent = STORE.name;
+  $("brand").setAttribute("aria-label", `${STORE.name} home`);
+  headline.innerHTML = `${STORE.headline[0]} <span>${STORE.headline[1]}</span>`;
+  $("storeFoot").textContent = `${STORE.name} · demo store, no real checkout`;
+  document.title = storeTitle();
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const D = reduce ? 1 : 720;               // main duration (ms)
   const EASE = "cubic-bezier(.65,0,.2,1)";
@@ -197,7 +230,7 @@
   PRODUCTS.forEach((p, i) => {
     const b = document.createElement("button");
     b.className = "item"; b.type = "button"; b.setAttribute("role","listitem");
-    b.setAttribute("aria-label", `${p.name}, $${p.price.toFixed(2)}`);
+    b.setAttribute("aria-label", `${p.name}, ${fmt(p.price)}`);
     b.innerHTML = `<img src="${src(p.colors[0].img)}" alt="${p.name}" width="450" height="600" draggable="false" ${i>3?'loading="lazy"':''}><span class="tag">${p.name}</span>`;
     b.addEventListener("click", e => { e.stopPropagation(); open(i); });
     rack.appendChild(b);
@@ -206,7 +239,6 @@
   const rail = $("rail");
 
   let state = "rack", busy = false, current = -1, colorIdx = 0, running = [];
-  const fmt = n => `$${n.toFixed(2)}`;
   const flip = (a, b) => `translate(${a.left-b.left}px, ${a.top-b.top}px) scale(${a.width/b.width}, ${a.height/b.height})`;
   const track = a => (running.push(a), a);
   const clearRunning = () => { running.forEach(a => a.cancel()); running = []; };
@@ -215,7 +247,7 @@
     $("pName").textContent = p.name;
     $("pPrice").textContent = fmt(p.price);
     $("pDesc").textContent = p.desc;
-    $("size").value = "Medium";
+    $("size").value = "M";
     renderSwatches(p);
   }
   function lum(hex){ const n=parseInt(hex.slice(1),16); return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))/255; }
@@ -274,7 +306,7 @@
 
     heroAnim.onfinish = () => { busy = false; state = "detail"; };
     if (location.hash !== "#" + p.id) history.pushState({p:p.id}, "", "#" + p.id);
-    document.title = `${p.name} — TRACKSIDE`;
+    document.title = `${p.name} — ${STORE.name.toUpperCase()}`;
   }
 
   function close(fromPop){
@@ -304,7 +336,7 @@
       $("detailView").setAttribute("aria-hidden","true");
       heroAnim.cancel(); panelAnim.cancel();
       busy = false; state = "rack"; current = -1;
-      document.title = "TRACKSIDE — Off the rack, never ordinary.";
+      document.title = storeTitle();
     };
     if (!fromPop && location.hash) history.back();
   }
@@ -337,7 +369,7 @@
     t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
   });
 
-  // centre the rack on the Star Hoodie on narrow screens; deep-link support
+  // centre the rack on narrow screens; deep-link support
   addEventListener("load", () => {
     const sc = $("rackScroll");
     if (sc.scrollWidth > sc.clientWidth) sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2;
